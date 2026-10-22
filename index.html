@@ -1,783 +1,438 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo Integración WIE PUCP</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Canvas Confetti -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- QRCode JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Poppins:wght@400;600;700;800&display=swap');
-        
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #18002c 0%, #2a0845 50%, #120021 100%);
-            min-height: 100vh;
-        }
-
-        .font-head {
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        .grid-cell {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .cell-selected {
-            background: linear-gradient(135deg, #a855f7 0%, #d946ef 100%) !important;
-            color: #ffffff !important;
-            transform: scale(0.97);
-            box-shadow: 0 0 15px rgba(217, 70, 239, 0.5);
-        }
-
-        .modal-blur {
-            backdrop-filter: blur(8px);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bingo Rutas STEM - WIE / Secretaría de Género / Tercio EEGGCC</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; background-color: #f4f0f8; }
+    .bingo-cell { transition: all 0.2s ease-in-out; }
+    .bingo-cell:hover { transform: translateY(-2px); }
+  </style>
 </head>
-<body class="text-white p-3 sm:p-6 flex flex-col items-center justify-between min-h-screen">
+<body class="min-h-screen pb-12 text-gray-800">
 
-    <!-- HEADER & ORGANIZADORES -->
-    <header class="w-full max-w-2xl text-center mb-4">
-        <div class="flex justify-center items-center gap-3 sm:gap-6 mb-3">
-            <!-- Logos organizadores con alta fidelidad gráfica -->
-            <img id="imgTercio" class="h-11 sm:h-14 w-auto object-contain bg-white/10 p-1 rounded-full border border-purple-400/30 shadow-md" alt="Tercio EEGGCC" title="Tercio EEGGCC">
-            <img id="imgWie" class="h-11 sm:h-14 w-auto object-contain bg-white/10 p-1 rounded-full border border-purple-400/30 shadow-md" alt="WIE PUCP" title="IEEE WIE PUCP">
-            <img id="imgGenero" class="h-11 sm:h-14 w-auto object-contain bg-white/10 p-1 rounded-full border border-purple-400/30 shadow-md" alt="Secretaría de Género" title="Secretaría de Género">
-        </div>
-        
-        <!-- LOGO RUTAS STEM RECREADO CON MÁXIMA FIDELIDAD -->
-        <div class="mb-2 flex justify-center items-center">
-            <canvas id="rutasStemCanvas" width="540" height="280" class="max-w-full h-auto drop-shadow-xl"></canvas>
-        </div>
+  <!-- Header Branding -->
+  <header class="bg-white shadow-md border-b-4 border-pink-500 py-4 px-6 mb-6">
+    <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <canvas id="logoTercio" width="50" height="50" class="rounded-full shadow-sm"></canvas>
+        <canvas id="logoWIE" width="50" height="50" class="rounded-full shadow-sm"></canvas>
+        <canvas id="logoGenero" width="50" height="50" class="rounded-full shadow-sm"></canvas>
+      </div>
 
-        <h1 class="font-head font-extrabold text-2xl sm:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 via-purple-200 to-amber-300">
-            BINGO DE INTEGRACIÓN
-        </h1>
-        <p class="text-xs sm:text-sm text-purple-200 mt-1 font-medium">
-            ¡Interactúa con tus compañeras, completa la cartilla y gana premios!
-        </p>
-    </header>
+      <div class="flex items-center">
+        <canvas id="logoRutasStem" width="280" height="85"></canvas>
+      </div>
 
-    <!-- PANEL DE USUARIO Y CONTROLES -->
-    <div class="w-full max-w-2xl bg-purple-900/40 border border-purple-500/30 rounded-2xl p-3 sm:p-4 mb-4 flex flex-wrap items-center justify-between gap-2 shadow-xl backdrop-blur-md">
-        <div class="flex items-center gap-2">
-            <button onclick="openUserModal()" class="bg-purple-800/80 hover:bg-purple-700 text-purple-200 text-xs px-3 py-1.5 rounded-xl border border-purple-500/40 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-user-circle text-fuchsia-400"></i>
-                <span id="userInfoDisplay">Identificarse</span>
-            </button>
-            <div class="text-xs bg-purple-950/80 px-3 py-1.5 rounded-xl border border-purple-700/50">
-                <span>Progreso: </span>
-                <strong id="scoreCounter" class="text-amber-300 font-bold">0 / 25</strong>
-            </div>
-        </div>
+      <div class="flex items-center gap-2">
+        <button onclick="pedirClaveAdmin()" class="bg-purple-700 hover:bg-purple-800 text-white font-semibold py-2 px-4 rounded-xl text-xs transition-colors shadow">
+          🔒 Directiva
+        </button>
+      </div>
+    </div>
+  </header>
 
-        <div class="flex items-center gap-2">
-            <!-- Botón de Directiva Protegido con Clave -->
-            <button onclick="openAdminAuthModal()" class="bg-purple-900/80 hover:bg-purple-800 text-amber-300 text-xs px-2.5 py-1.5 rounded-xl border border-amber-400/40 transition flex items-center gap-1.5" title="Acceso Exclusivo Directiva">
-                <i class="fa-solid fa-user-shield"></i>
-            </button>
-            <button onclick="openQRModal()" class="bg-fuchsia-600/90 hover:bg-fuchsia-500 text-white text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 shadow">
-                <i class="fa-solid fa-qrcode"></i> Compartir
-            </button>
-            <button onclick="resetBoard()" class="bg-red-900/60 hover:bg-red-800 text-red-200 text-xs p-1.5 rounded-xl transition" title="Reiniciar Cartilla">
-                <i class="fa-solid fa-rotate-right"></i>
-            </button>
+  <!-- Contenedor Principal -->
+  <main class="max-w-4xl mx-auto px-4">
+    <!-- Card de Registro de Usuario -->
+    <div id="userCard" class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-purple-100">
+      <h2 class="text-xl font-bold text-purple-900 mb-2">¡Bienvenida al Bingo RUTAS STEM! 🎉</h2>
+      <p class="text-sm text-gray-600 mb-4">Ingresa tus datos antes de empezar a interactuar y marcar tus casillas.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Salón *</label>
+          <select id="userSalon" class="w-full border rounded-xl p-2 text-sm focus:ring-2 focus:ring-pink-400 outline-none">
+            <option value="Salón 1">Salón 1</option>
+            <option value="Salón 2">Salón 2</option>
+          </select>
         </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Tu Nombre Completo *</label>
+          <input type="text" id="userName" placeholder="Ej: Maria Garcia" class="w-full border rounded-xl p-2 text-sm focus:ring-2 focus:ring-pink-400 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Código PUCP / Correo *</label>
+          <input type="text" id="userCode" placeholder="20231234 / correo@pucp.edu.pe" class="w-full border rounded-xl p-2 text-sm focus:ring-2 focus:ring-pink-400 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Especialidad / Carrera *</label>
+          <input type="text" id="userMajor" placeholder="Ej: Ing. Mecatrónica" class="w-full border rounded-xl p-2 text-sm focus:ring-2 focus:ring-pink-400 outline-none">
+        </div>
+      </div>
+      <button onclick="guardarDatosUsuario()" class="mt-4 bg-pink-600 hover:bg-pink-700 text-white font-bold py-2.5 px-6 rounded-xl w-full text-sm transition-colors shadow-md">
+        Guardar e Iniciar Bingo 🚀
+      </button>
     </div>
 
-    <!-- TABLERO DE BINGO (GRID 5x5) -->
-    <main class="w-full max-w-2xl mb-6">
-        <div id="grid" class="grid grid-cols-5 gap-1.5 sm:gap-2.5">
-            <!-- Renderizado dinámico vía JS -->
+    <!-- Tablero de Bingo -->
+    <div id="bingoBoardContainer" class="hidden">
+      <div class="flex items-center justify-between mb-4 bg-purple-900 text-white p-4 rounded-2xl shadow-md">
+        <div>
+          <p class="text-xs text-purple-200">Participante:</p>
+          <p id="labelNombreParticipante" class="font-bold text-lg text-pink-300">-</p>
         </div>
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="text-center text-[11px] text-purple-300/80 mb-2">
-        <p>Organizado por <strong>IEEE WIE PUCP</strong>, <strong>Tercio EEGGCC</strong> & <strong>Secretaría de Género</strong></p>
-    </footer>
-
-    <!-- MODAL 1: REGISTRO DE PARTICIPANTE -->
-    <div id="userModal" class="fixed inset-0 bg-black/80 modal-blur z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-purple-950 border-2 border-purple-500 rounded-2xl p-5 max-w-sm w-full text-center shadow-2xl relative">
-            <div class="w-12 h-12 bg-purple-800 text-fuchsia-300 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl border border-purple-500">
-                <i class="fa-solid fa-id-card"></i>
-            </div>
-            <h3 class="font-head font-bold text-lg text-white mb-1">¡Bienvenida al Bingo!</h3>
-            <p class="text-xs text-purple-300 mb-4">Ingresa tus datos para registrar tus aciertos y participar por los premios:</p>
-            
-            <div class="space-y-3 text-left mb-5">
-                <div>
-                    <label class="text-[10px] font-bold text-purple-300 block mb-1">Salón *</label>
-                    <select id="userClassroomInput" class="w-full bg-purple-900 border border-purple-600 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-fuchsia-400 font-semibold">
-                        <option value="Salón 1">Salón 1</option>
-                        <option value="Salón 2">Salón 2</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-purple-300 block mb-1">Nombre Completo *</label>
-                    <input type="text" id="userNameInput" placeholder="Ej: Maria Garcia" class="w-full bg-purple-900 border border-purple-600 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-fuchsia-400">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-purple-300 block mb-1">Código PUCP o Correo *</label>
-                    <input type="text" id="userCodeInput" placeholder="Ej: 20241234" class="w-full bg-purple-900 border border-purple-600 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-fuchsia-400">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-purple-300 block mb-1">Especialidad / Rama</label>
-                    <input type="text" id="userBranchInput" placeholder="Ej: Ing. Informática / EEGGCC" class="w-full bg-purple-900 border border-purple-600 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-fuchsia-400">
-                </div>
-            </div>
-
-            <button onclick="saveUserProfile()" class="w-full bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg">
-                Comenzar a Jugar
-            </button>
+        <div class="text-right">
+          <p class="text-xs text-purple-200">Aciertos:</p>
+          <p id="labelAciertos" class="font-bold text-2xl text-green-400">0 / 25</p>
         </div>
+      </div>
+
+      <div id="bingoGrid" class="grid grid-cols-5 gap-2 md:gap-3 bg-white p-3 md:p-5 rounded-3xl shadow-xl border-2 border-pink-200">
+        <!-- Las 25 casillas se cargan dinámicamente -->
+      </div>
     </div>
+  </main>
 
-    <!-- MODAL 2: INTERACCIÓN Y VALIDACIÓN DE CASILLA -->
-    <div id="cellModal" class="fixed inset-0 bg-black/80 modal-blur z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-purple-950 border-2 border-purple-500 rounded-2xl p-5 max-w-sm w-full text-center shadow-2xl relative">
-            <button onclick="closeCellModal()" class="absolute top-3 right-3 text-purple-300 hover:text-white text-xl">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            
-            <div class="w-12 h-12 bg-purple-800 text-amber-300 rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold border border-purple-600">
-                <i class="fa-solid fa-comments"></i>
-            </div>
-
-            <h4 class="font-head font-bold text-sm text-white mb-1" id="cellPromptText">Reto de Integración</h4>
-            <p class="text-[11px] text-purple-300 mb-4" id="cellSubtextPrompt">Conversa con una compañera y completa los datos para validar la casilla:</p>
-            
-            <div class="space-y-3 text-left mb-4">
-                <div>
-                    <label class="text-[10px] font-bold text-purple-300 block mb-1">Nombre de la compañera *</label>
-                    <input type="text" id="partnerNameInput" placeholder="Ej: Camila" class="w-full bg-purple-900 border border-purple-600 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-fuchsia-400">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-purple-300 block mb-1" id="partnerDetailLabel">Respuesta o Detalle de la conversación</label>
-                    <input type="text" id="partnerDetailInput" placeholder="Ej: Le gusta Cálculo 1 / Usa Python" class="w-full bg-purple-900 border border-purple-600 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-fuchsia-400">
-                </div>
-            </div>
-
-            <button onclick="confirmCellValidation()" class="w-full bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-lg">
-                Validar y Marcar Casilla
-            </button>
+  <!-- Modal para completar Reto/Casilla -->
+  <div id="modalReto" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-purple-100">
+      <h3 id="modalTituloReto" class="font-bold text-lg text-purple-900 mb-2"></h3>
+      <p id="modalIndicacionReto" class="text-xs text-pink-600 font-medium mb-4"></p>
+      
+      <div class="space-y-3 mb-5">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Nombre de la compañera que cumple el reto *</label>
+          <input type="text" id="inputNombreContacto" placeholder="Ej: Andrea Torres" class="w-full border rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-pink-400 outline-none">
         </div>
-    </div>
-
-    <!-- MODAL DE AUTENTICACIÓN PARA DIRECTIVA -->
-    <div id="adminAuthModal" class="fixed inset-0 bg-black/85 modal-blur z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-purple-950 border-2 border-amber-400 rounded-2xl p-5 max-w-sm w-full text-center shadow-2xl relative">
-            <button onclick="closeAdminAuthModal()" class="absolute top-3 right-3 text-purple-300 hover:text-white text-xl">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="w-12 h-12 bg-amber-500/20 text-amber-300 rounded-full flex items-center justify-center mx-auto mb-2 text-xl border border-amber-400/50">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            <h3 class="font-head font-bold text-base text-white mb-1">Acceso Exclusivo Directiva</h3>
-            <p class="text-xs text-purple-300 mb-4">Ingresa la clave para ver el registro y descargar el Excel:</p>
-            <input type="password" id="adminPasswordInput" placeholder="Clave de Directiva" class="w-full bg-purple-900 border border-purple-600 text-white text-xs rounded-lg p-2.5 mb-4 focus:outline-none focus:border-amber-400 text-center font-bold tracking-widest">
-            <button onclick="verifyAdminPassword()" class="w-full bg-amber-400 hover:bg-amber-300 text-purple-950 text-xs font-black py-2.5 rounded-xl transition uppercase tracking-wider">
-                Ingresar al Registro
-            </button>
+        <div>
+          <label id="labelInputDetalle" class="block text-xs font-semibold text-gray-600 mb-1">Respuesta / Detalle *</label>
+          <input type="text" id="inputDetalleContacto" placeholder="" class="w-full border rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-pink-400 outline-none">
         </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="cerrarModalReto()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm transition-colors">Cancelar</button>
+        <button onclick="confirmarCasilla()" class="flex-1 bg-pink-600 hover:bg-pink-700 text-white py-2.5 rounded-xl font-semibold text-sm shadow transition-colors">Validar Casilla ✨</button>
+      </div>
     </div>
+  </div>
 
-    <!-- MODAL 3: EXPORTACIÓN Y REGISTRO EN EXCEL (SOLO DIRECTIVA) -->
-    <div id="leaderboardModal" class="fixed inset-0 bg-black/80 modal-blur z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-purple-950 border-2 border-purple-600 rounded-2xl p-5 max-w-md w-full shadow-2xl relative">
-            <button onclick="closeLeaderboardModal()" class="absolute top-3 right-3 text-purple-300 hover:text-white text-xl">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            
-            <h3 class="font-head font-bold text-lg text-white mb-1 flex items-center gap-2">
-                <i class="fa-solid fa-trophy text-amber-300"></i> Registro de Participantes (Directiva)
-            </h3>
-            <p class="text-xs text-purple-300 mb-3">Progreso de las jugadoras guardado en el sistema.</p>
+  <!-- Modal Admin Directiva -->
+  <div id="modalAdmin" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-xl text-purple-900">📊 Panel de Directiva (Registro General)</h3>
+        <button onclick="cerrarModalAdmin()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      </div>
 
-            <div class="max-h-60 overflow-y-auto mb-4 border border-purple-800 rounded-xl bg-purple-900/50 p-2">
-                <table class="w-full text-left text-[11px] text-purple-200">
-                    <thead class="text-purple-400 border-b border-purple-800 text-[10px] uppercase">
-                        <tr>
-                            <th class="p-1">Salón</th>
-                            <th class="p-1">Participante</th>
-                            <th class="p-1 text-center">Aciertos</th>
-                            <th class="p-1 text-center">Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboardTableBody">
-                        <!-- Carga dinámica -->
-                    </tbody>
-                </table>
-            </div>
+      <p class="text-xs text-gray-500 mb-4">Lista de participantes guardadas en este dispositivo:</p>
 
-            <button onclick="downloadCSV()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-file-excel"></i> Descargar Reporte Completo (.CSV / Excel)
-            </button>
-        </div>
+      <div class="overflow-x-auto mb-4 border rounded-xl">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-purple-100 text-purple-900 border-b">
+              <th class="p-2.5">Salón</th>
+              <th class="p-2.5">Participante</th>
+              <th class="p-2.5">Código/Correo</th>
+              <th class="p-2.5">Aciertos</th>
+              <th class="p-2.5">Bingo</th>
+            </tr>
+          </thead>
+          <tbody id="tablaRegistrosAdmin">
+            <!-- Registros cargados -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex justify-between items-center pt-2 border-t">
+        <button onclick="descargarExcelFormateado()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 shadow transition-colors">
+          📊 Descargar Excel Ordenado (.csv)
+        </button>
+        <button onclick="cerrarModalAdmin()" class="bg-gray-200 text-gray-800 font-semibold py-2.5 px-4 rounded-xl text-xs">Cerrar</button>
+      </div>
     </div>
+  </div>
 
-    <!-- MODAL 4: NOTIFICACIÓN DE BINGO -->
-    <div id="bingoWinModal" class="fixed inset-0 bg-black/90 modal-blur z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-gradient-to-b from-purple-900 to-purple-950 border-4 border-amber-400 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl relative">
-            <div class="text-5xl mb-2 text-amber-300">🎉</div>
-            <h2 class="font-head font-black text-3xl text-amber-300 tracking-wider mb-1">¡BINGO WIE!</h2>
-            <p class="text-xs text-purple-200 mb-4 font-semibold">¡Felicidades! Has completado una línea de integración con éxito.</p>
-            
-            <div class="bg-purple-900/80 p-3 rounded-xl border border-amber-400/50 mb-4 text-xs text-purple-100">
-                <p><strong>Jugadora:</strong> <span id="winUserName">-</span></p>
-                <p><strong>Hora:</strong> <span id="winTime">-</span></p>
-            </div>
+  <script>
+    const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx_TU_SCRIPT_ID/exec";
+    const ADMIN_PASS = "WIE2026";
 
-            <button onclick="closeBingoWinModal()" class="w-full bg-amber-400 hover:bg-amber-300 text-purple-950 text-sm font-black py-3 rounded-xl transition uppercase tracking-wider">
-                Avisar a las Organizadoras
-            </button>
-        </div>
-    </div>
+    let userData = { salon: 'Salón 1', name: '', code: '', major: '', points: 0, bingo: false };
+    let gridData = Array(25).fill(null);
+    let selectedCellIndex = null;
 
-    <!-- MODAL GENERADOR CÓDIGO QR -->
-    <div id="qrModal" class="fixed inset-0 bg-black/70 modal-blur z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-purple-950 border-2 border-purple-600 rounded-2xl p-5 max-w-sm w-full text-center shadow-2xl relative">
-            <button onclick="closeQRModal()" class="absolute top-3 right-3 text-purple-300 hover:text-white text-xl">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            
-            <h3 class="font-head font-bold text-lg text-white mb-1"><i class="fa-solid fa-qrcode text-purple-400 mr-2"></i>Escanea para Jugar</h3>
-            <p class="text-xs text-purple-300 mb-3">Muestra este código QR para que otras chicas escaneen e ingresen al Bingo.</p>
-            
-            <div class="bg-white p-4 rounded-xl inline-block shadow-inner mb-2">
-                <div id="qrcodeCanvas"></div>
-            </div>
-        </div>
-    </div>
+    const retosBingo = [
+      { t: "Sabe usar Python, C++ u otro lenguaje", hint: "Ej: Programa en Python / usa C++ en laboratorios" },
+      { t: "Sigue en Instagram a WIE, Sec. Género y Tercio EEGGCC", hint: "Ej: Verificado en su cuenta de IG" },
+      { t: "Te contó una anécdota universitaria", hint: "Ej: Se equivocó de pabellón el primer día" },
+      { t: "Coinciden en su mismo gusto musical o artista favorito", hint: "Ej: Ambas escuchan a Taylor Swift / Coldplay" },
+      { t: "Recomendó un point de comida cerca a la PUCP", hint: "Ej: El huarique de hamburguesas en la Av. Universitaria" },
+      { t: "Se unió a una agrupación o voluntariado este ciclo", hint: "Ej: Es voluntaria en IEEE WIE PUCP" },
+      { t: "Usa IA para resumir o estudiar mejor", hint: "Ej: Usa ChatGPT para repasar conceptos clave" },
+      { t: "Ha asistido a una actividad o taller previo en la PUCP", hint: "Ej: Estuvo en el taller de bienvenida" },
+      { t: "Está emocionada por integrarse y hacer amigas hoy", hint: "Ej: Quiere conocer compañeras de otras carreras" },
+      { t: "Sabe qué significa STEM en sus propias palabras", hint: "Ej: Ciencia, Tecnología, Ingeniería y Matemáticas" },
+      { t: "Tiene un hobbie fuera de los estudios", hint: "Ej: Dibuja digitalmente / le gusta bailar" },
+      { t: "Comparte tu misma facultad o especialidad", hint: "Ej: Ambas son de Ing. Biomédica" },
+      { t: "LIBRE: Integración RUTAS STEM 2026", hint: "Casilla Libre de Integración ✨" },
+      { t: "Tiene un atajo de teclado o hack de estudio favorito", hint: "Ej: Usa Notion + temporizador Pomodoro" },
+      { t: "Usa lentes o accesorios morados/rosados hoy", hint: "Ej: Trae casaca rosada o lentes" },
+      { t: "Conoce el nombre de la presidenta o representante de una agrupación", hint: "Ej: Conoce a la directiva de WIE" },
+      { t: "Ha aprobado un curso difícil de EEGGCC", hint: "Ej: Aprobó Cálculo 1 o Física 1" },
+      { t: "Te contó su meta académica o proyecto de este año", hint: "Ej: Quiere entrar a un grupo de investigación" },
+      { t: "Tiene una bebida o snack favorito para estudiar", hint: "Ej: Toma café con leche / galletas" },
+      { t: "Le apasiona un tema específico de tecnología o ciencia", hint: "Ej: La robótica médica o inteligencia artificial" },
+      { t: "Ha participado en una feria de agrupaciones", hint: "Ej: Asistió a la feria en el tontódromo" },
+      { t: "Sabe cuál es su lugar favorito del campus PUCP", hint: "Ej: El jardín central o la biblioteca de ciencias" },
+      { t: "Te recomendó una serie, película o libro reciente", hint: "Ej: Vio una serie de ciencia ficción en Netflix" },
+      { t: "Trae una cartuchera u organizador súper ordenado", hint: "Ej: Usa resaltadores de colores" },
+      { t: "Tiene una frase o lema de motivación para este ciclo", hint: "Ej: 'Paso a paso todo se logra'" }
+    ];
 
-    <script>
-        // RETOS DE INTEGRACIÓN CON HINTS Y PLACEHOLDERS ESPECÍFICOS
-        const challenges = [
-            { text: "Te contó cuál es su curso favorito de EEGGCC", hint: "¿Cuál es el curso y por qué le gusta?", placeholder: "Ej: Cálculo 1 - le gusta el profe" },
-            { text: "Sabe qué significa STEM con sus palabras", hint: "¿Qué significado le dio a las siglas STEM?", placeholder: "Ej: Ciencia, Tec, Eng, Mate para cambiar el mundo" },
-            { text: "Sabe usar Python, C++ u otro lenguaje", hint: "¿Qué lenguaje de programación utiliza?", placeholder: "Ej: Usa Python para sus trabajos de Progra" },
-            { text: "Coinciden en su mismo gusto musical o artista favorito", hint: "¿Qué grupo, género o artista comparten?", placeholder: "Ej: Ambas escuchan a Taylor Swift / Bad Bunny" },
-            { text: "Ha asistido a una actividad o taller previo en la PUCP", hint: "¿A qué taller o evento asistió antes?", placeholder: "Ej: Asistió al Taller de Robótica del año pasado" },
-            { text: "Usa IA para resumir o estudiar mejor", hint: "¿Qué herramienta o prompt de IA suele usar?", placeholder: "Ej: Usa ChatGPT para resúmenes de lectura" },
-            { text: "Se unió a una agrupación o voluntariado este ciclo", hint: "¿A qué agrupación o grupo de la PUCP se unió?", placeholder: "Ej: Se unió a WIE / IEEE / Voluntariado PUCP" },
-            { text: "Te contó de qué colegio, distrito o provincia viene", hint: "¿De qué distrito, colegio o ciudad proviene?", placeholder: "Ej: Viene de San Miguel / Colegio Claretiano" },
-            { text: "Te recomendó un point cerca a la PUCP", hint: "¿Qué huarique o point para comer o estudiar te recomendó?", placeholder: "Ej: El Point de Menú en Riva Agüero" },
-            { text: "Tiene una meta o proyecto claro para este año", hint: "¿Cuál es su meta principal este año?", placeholder: "Ej: Pasar Físicas y entrar a proyectos STEM" },
-            { text: "Te contó una anécdota universitaria", hint: "¿Qué anécdota o recuerdo gracioso te compartió?", placeholder: "Ej: Se equivocó de salón el primer día de clases" },
-            { text: "Le apasiona un tema de Ciencia o Tecnología", hint: "¿Qué tema científico o tecnológico le fascina?", placeholder: "Ej: La inteligencia artificial y biotecnología" },
-            { text: "Tiene una bebida o truco infalible para no dormirse", hint: "¿Cuál es su secreto o bebida para las noches de estudio?", placeholder: "Ej: Café helado con canela / monster" },
-            { text: "Te contó su tip #1 para no acumularse de tareas", hint: "¿Qué método o aplicación usa para organizarse?", placeholder: "Ej: Usa Notion y hace listas diarias" },
-            { text: "Coinciden en su serie o anime favorito", hint: "¿Qué serie, película o anime les gusta a ambas?", placeholder: "Ej: Coinciden en ver Arcane / Attack on Titan" },
-            { text: "Es de primer ciclo en EEGGCC", hint: "¿Qué es lo que más le ha sorprendido del campus hasta ahora?", placeholder: "Ej: Le impresionó lo grande que es la biblioteca" },
-            { text: "Hace un deporte o hobby creativo en sus tiempos libres", hint: "¿Qué deporte, baile o pasatiempo realiza?", placeholder: "Ej: Practica vóley en la PUCP y pinta" },
-            { text: "Sabe hablar o está aprendiendo otro idioma", hint: "¿Qué idioma habla o está estudiando?", placeholder: "Ej: Está aprendiendo Francés e Inglés B2" },
-            { text: "Sigue a las tres en IG: WIE, Secretaría de Género y Tercio", hint: "¿Confirmen! ¿Cuál de las 3 cuentas le gusta más?", placeholder: "Ej: Sigue a las 3 cuentas en Instagram" },
-            { text: "Ha expuesto un proyecto en público o feria", hint: "¿De qué trató su proyecto o exposición?", placeholder: "Ej: Expuso un prototipo de reciclaje" },
-            { text: "Te enseñó un atajo de teclado o hack universitario", hint: "¿Qué atajo de teclado o truco te recomendó?", placeholder: "Ej: Alt + Tab / Truco para buscar papers en Google" },
-            { text: "Prefiere estudiar de madrugada o súper temprano", hint: "¿En qué horario rinde mejor estudiando?", placeholder: "Ej: Estudia de 11pm a 2am en silencio" },
-            { text: "Te contó qué aplicación no puede faltar en su cel", hint: "¿Qué app considera indispensable día a día?", placeholder: "Ej: Spotify / Canva / Paideia" },
-            { text: "Sabe un dato curioso sobre la PUCP o el campus", hint: "¿Qué dato curioso del campus te contó?", placeholder: "Ej: La historia de los venados en el campus" },
-            { text: "Está emocionada por integrarse y hacer amigas hoy", hint: "¿Qué es lo que más le emociona del evento de hoy?", placeholder: "Ej: Quiere conocer más chicas de su carrera" }
-        ];
+    window.onload = function() {
+      renderLogos();
+      cargarHistorialLocal();
+    };
 
-        let selectedCells = new Array(25).fill(false);
-        let validatedContacts = new Array(25).fill("");
-        let validatedDetails = new Array(25).fill("");
-        let activeCellIndex = null;
-        let currentUser = null;
-        let hasWonBingo = false;
-        const ADMIN_PIN = "WIE2026";
+    function guardarDatosUsuario() {
+      const salon = document.getElementById('userSalon').value;
+      const name = document.getElementById('userName').value.trim();
+      const code = document.getElementById('userCode').value.trim();
+      const major = document.getElementById('userMajor').value.trim();
 
-        window.onload = function() {
-            drawRutasStemCanvas();
-            renderLogosAsDataURIs();
-            loadUserData();
-            initGrid();
-        };
+      if (!name || !code || !major) {
+        alert("Por favor completa todos tus datos antes de continuar.");
+        return;
+      }
 
-        function loadUserData() {
-            const saved = localStorage.getItem('wie_bingo_user');
-            if (saved) {
-                currentUser = JSON.parse(saved);
-                updateUserUI();
-            } else {
-                openUserModal();
-            }
+      userData = { salon, name, code, major, points: 0, bingo: false };
+      document.getElementById('labelNombreParticipante').innerText = name + " (" + salon + ")";
+      document.getElementById('userCard').classList.add('hidden');
+      document.getElementById('bingoBoardContainer').classList.remove('hidden');
 
-            const savedState = localStorage.getItem('wie_bingo_state');
-            if (savedState) {
-                const parsed = JSON.parse(savedState);
-                selectedCells = parsed.selectedCells || selectedCells;
-                validatedContacts = parsed.validatedContacts || validatedContacts;
-                validatedDetails = parsed.validatedDetails || validatedDetails;
-                hasWonBingo = parsed.hasWonBingo || false;
-            }
+      renderGrid();
+      enviarAGoogleSheets();
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('bingoGrid');
+      grid.innerHTML = '';
+
+      retosBingo.forEach((reto, idx) => {
+        const isFree = idx === 12;
+        if (isFree && !gridData[idx]) {
+          gridData[idx] = { nombre: "RUTAS STEM", detalle: "Casilla Libre" };
         }
 
-        function updateUserUI() {
-            if (currentUser) {
-                document.getElementById('userInfoDisplay').innerText = `${currentUser.classroom || 'Salón 1'} - ${currentUser.name}`;
-            } else {
-                document.getElementById('userInfoDisplay').innerText = "Identificarse";
-            }
-        }
-
-        function initGrid() {
-            const gridContainer = document.getElementById('grid');
-            gridContainer.innerHTML = '';
-
-            challenges.forEach((item, idx) => {
-                const cell = document.createElement('button');
-                cell.onclick = () => openCellModal(idx);
-                cell.id = `cell-${idx}`;
-                
-                const isSelected = selectedCells[idx];
-                const contact = validatedContacts[idx];
-                const detail = validatedDetails[idx];
-
-                cell.className = `grid-cell flex flex-col justify-between p-2 rounded-xl text-left border shadow-md h-28 sm:h-32 transition-all relative overflow-hidden ${
-                    isSelected 
-                    ? 'cell-selected border-fuchsia-300' 
-                    : 'bg-purple-950/60 border-purple-800/80 hover:border-purple-500 hover:bg-purple-900/60'
-                }`;
-
-                cell.innerHTML = `
-                    <div class="text-[10px] sm:text-xs font-medium text-purple-100 leading-tight mb-1">
-                        ${item.text}
-                    </div>
-                    ${isSelected ? `
-                        <div class="bg-black/30 p-1.5 rounded-lg border border-white/20 text-[9px] sm:text-[10px]">
-                            <div class="font-bold text-amber-300 truncate"><i class="fa-solid fa-user-check text-[8px] mr-1"></i>${contact}</div>
-                            ${detail ? `<div class="text-purple-200 truncate opacity-90 text-[8px] sm:text-[9px]">${detail}</div>` : ''}
-                        </div>
-                    ` : `
-                        <div class="text-[9px] text-purple-400/80 flex items-center gap-1 font-semibold">
-                            <i class="fa-solid fa-plus text-[8px]"></i> Marcar
-                        </div>
-                    `}
-                `;
-
-                gridContainer.appendChild(cell);
-            });
-
-            updateScore();
-        }
-
-        function openCellModal(idx) {
-            if (!currentUser) {
-                openUserModal();
-                return;
-            }
-
-            activeCellIndex = idx;
-            const item = challenges[idx];
-            document.getElementById('cellPromptText').innerText = item.text;
-            document.getElementById('cellSubtextPrompt').innerText = item.hint || "Conversa con una compañera y completa los datos:";
-            document.getElementById('partnerDetailLabel').innerText = "Detalle o Respuesta (Opcional)";
-            document.getElementById('partnerNameInput').value = validatedContacts[idx] || '';
-            document.getElementById('partnerDetailInput').value = validatedDetails[idx] || '';
-            document.getElementById('partnerDetailInput').placeholder = item.placeholder || "Ej: Su opinión o respuesta";
-            
-            document.getElementById('cellModal').classList.remove('hidden');
-        }
-
-        function closeCellModal() {
-            document.getElementById('cellModal').classList.add('hidden');
-        }
-
-        function confirmCellValidation() {
-            const partnerName = document.getElementById('partnerNameInput').value.trim();
-            const partnerDetail = document.getElementById('partnerDetailInput').value.trim();
-
-            if (!partnerName) {
-                alert("Por favor ingresa el nombre de la compañera.");
-                return;
-            }
-
-            if (activeCellIndex !== null) {
-                selectedCells[activeCellIndex] = true;
-                validatedContacts[activeCellIndex] = partnerName;
-                validatedDetails[activeCellIndex] = partnerDetail;
-
-                saveGameState();
-                initGrid();
-                checkBingoCondition();
-                closeCellModal();
-            }
-        }
-
-        function updateScore() {
-            const total = selectedCells.filter(Boolean).length;
-            document.getElementById('scoreCounter').innerText = `${total} / 25`;
-        }
-
-        function saveGameState() {
-            localStorage.setItem('wie_bingo_state', JSON.stringify({
-                selectedCells,
-                validatedContacts,
-                validatedDetails,
-                hasWonBingo
-            }));
-            syncProgressToCloud();
-        }
-
-        function checkBingoCondition() {
-            if (hasWonBingo) return;
-
-            const winPatterns = [
-                // Filas
-                [0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24],
-                // Columnas
-                [0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24],
-                // Diagonales
-                [0,6,12,18,24], [4,8,12,16,20]
-            ];
-
-            const isBingo = winPatterns.some(pattern => pattern.every(idx => selectedCells[idx]));
-
-            if (isBingo) {
-                hasWonBingo = true;
-                saveGameState();
-                triggerWinEffects();
-            }
-        }
-
-        function triggerWinEffects() {
-            confetti({
-                particleCount: 120,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-
-            document.getElementById('winUserName').innerText = currentUser ? `${currentUser.name} (${currentUser.classroom || 'Salón 1'})` : 'Jugadora';
-            document.getElementById('winTime').innerText = new Date().toLocaleTimeString();
-            document.getElementById('bingoWinModal').classList.remove('hidden');
-        }
-
-        function closeBingoWinModal() {
-            document.getElementById('bingoWinModal').classList.add('hidden');
-        }
-
-        function resetBoard() {
-            if (confirm("¿Estás segura de reiniciar la cartilla? Se borrarán tus aciertos.")) {
-                selectedCells = new Array(25).fill(false);
-                validatedContacts = new Array(25).fill("");
-                validatedDetails = new Array(25).fill("");
-                hasWonBingo = false;
-                saveGameState();
-                initGrid();
-            }
-        }
-
-        function syncProgressToCloud() {
-            if (!currentUser) return;
-
-            const score = selectedCells.filter(Boolean).length;
-            const entry = {
-                user: currentUser,
-                score,
-                hasBingo: hasWonBingo,
-                timestamp: new Date().toLocaleTimeString()
-            };
-
-            let globalLeaderboard = JSON.parse(localStorage.getItem('wie_bingo_global_leaderboard') || "[]");
-            const existingIdx = globalLeaderboard.findIndex(item => item.user.code === currentUser.code);
-
-            if (existingIdx >= 0) {
-                globalLeaderboard[existingIdx] = entry;
-            } else {
-                globalLeaderboard.push(entry);
-            }
-
-            localStorage.setItem('wie_bingo_global_leaderboard', JSON.stringify(globalLeaderboard));
-        }
-
-        function saveUserProfile() {
-            const classroom = document.getElementById('userClassroomInput').value;
-            const name = document.getElementById('userNameInput').value.trim();
-            const code = document.getElementById('userCodeInput').value.trim();
-            const branch = document.getElementById('userBranchInput').value.trim();
-
-            if (!name || !code) {
-                alert("Por favor ingresa tu Nombre y Código/Correo.");
-                return;
-            }
-
-            currentUser = { classroom, name, code, branch, registeredAt: new Date().toLocaleTimeString() };
-            localStorage.setItem('wie_bingo_user', JSON.stringify(currentUser));
-            
-            updateUserUI();
-            document.getElementById('userModal').classList.add('hidden');
-            syncProgressToCloud();
-        }
-
-        function openUserModal() {
-            if (currentUser) {
-                document.getElementById('userClassroomInput').value = currentUser.classroom || 'Salón 1';
-                document.getElementById('userNameInput').value = currentUser.name || '';
-                document.getElementById('userCodeInput').value = currentUser.code || '';
-                document.getElementById('userBranchInput').value = currentUser.branch || '';
-            }
-            document.getElementById('userModal').classList.remove('hidden');
-        }
-
-        // CONTROL DE ACCESO EXCLUSIVO PARA DIRECTIVA
-        function openAdminAuthModal() {
-            document.getElementById('adminPasswordInput').value = '';
-            document.getElementById('adminAuthModal').classList.remove('hidden');
-        }
-
-        function closeAdminAuthModal() {
-            document.getElementById('adminAuthModal').classList.add('hidden');
-        }
-
-        function verifyAdminPassword() {
-            const pwd = document.getElementById('adminPasswordInput').value.trim();
-            if (pwd === ADMIN_PIN || pwd.toLowerCase() === "directiva") {
-                document.getElementById('adminAuthModal').classList.add('hidden');
-                showLeaderboardData();
-            } else {
-                alert("Clave incorrecta. Acceso restringido únicamente a la directiva.");
-            }
-        }
-
-        function closeLeaderboardModal() {
-            document.getElementById('leaderboardModal').classList.add('hidden');
-        }
-
-        function showLeaderboardData() {
-            const tbody = document.getElementById('leaderboardTableBody');
-            tbody.innerHTML = '';
-
-            let globalLeaderboard = JSON.parse(localStorage.getItem('wie_bingo_global_leaderboard') || "[]");
-            globalLeaderboard.sort((a, b) => b.score - a.score);
-
-            if (globalLeaderboard.length === 0 && currentUser) {
-                syncProgressToCloud();
-                globalLeaderboard = JSON.parse(localStorage.getItem('wie_bingo_global_leaderboard') || "[]");
-            }
-
-            globalLeaderboard.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-purple-800/40";
-                tr.innerHTML = `
-                    <td class="p-1 font-bold text-fuchsia-300">${item.user.classroom || 'Salón 1'}</td>
-                    <td class="p-1 font-semibold">${item.user.name}<br><span class="text-[9px] text-purple-400">${item.user.branch || ''}</span></td>
-                    <td class="p-1 text-center font-bold text-amber-300">${item.score} / 25</td>
-                    <td class="p-1 text-center">${item.hasBingo ? '<span class="bg-amber-400 text-purple-950 px-1.5 py-0.5 rounded font-black text-[9px]">BINGO</span>' : '<span class="text-purple-400 text-[10px]">En juego</span>'}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('leaderboardModal').classList.remove('hidden');
-        }
-
-        // DESCARGAR EXCEL / CSV COMPLETO
-        function downloadCSV() {
-            let globalLeaderboard = JSON.parse(localStorage.getItem('wie_bingo_global_leaderboard') || "[]");
-            
-            if (globalLeaderboard.length === 0) {
-                alert("Aún no hay registros de juego para exportar.");
-                return;
-            }
-
-            let csvContent = "\uFEFF"; // UTF-8 BOM para soporte de tildes en Excel
-            csvContent += "Salon,Participante,Codigo/Correo,Especialidad,Aciertos,Bingo,FechaHora\n";
-
-            globalLeaderboard.forEach(item => {
-                csvContent += `"${item.user.classroom || 'Salón 1'}","${item.user.name}","${item.user.code}","${item.user.branch || ''}",${item.score},${item.hasBingo ? 'SI' : 'NO'},"${item.timestamp}"\n`;
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `Bingo_WIE_Resultados_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function openQRModal() {
-            document.getElementById('qrModal').classList.remove('hidden');
-            generateQRCode();
-        }
-
-        function closeQRModal() {
-            document.getElementById('qrModal').classList.add('hidden');
-        }
-
-        function generateQRCode() {
-            const qrContainer = document.getElementById('qrcodeCanvas');
-            const url = window.location.href;
-            
-            qrContainer.innerHTML = '';
-            new QRCode(qrContainer, {
-                text: url,
-                width: 150,
-                height: 150,
-                colorDark : "#4c1d95",
-                colorLight : "#ffffff"
-            });
-        }
-
-        // DIBUJO DE RUTAS STEM
-        function drawRutasStemCanvas() {
-            const canvas = document.getElementById('rutasStemCanvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 1. Ovalo Rosa de Fondo
-            ctx.save();
-            ctx.translate(270, 120);
-            ctx.rotate(-0.05);
-            ctx.fillStyle = '#ebd5e3';
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 230, 110, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-
-            // 2. Texto "RUTAS"
-            ctx.save();
-            ctx.translate(270, 95);
-            ctx.rotate(-0.06);
-            ctx.font = '900 110px "Montserrat", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 22;
-            ctx.lineJoin = 'round';
-            ctx.strokeText('RUTAS', 0, 0);
-            
-            ctx.fillStyle = '#9e2a6c';
-            ctx.fillText('RUTAS', 0, 0);
-            ctx.restore();
-
-            // 3. Recuadro Verde Flecha y Lema
-            ctx.save();
-            ctx.translate(270, 230);
-            ctx.rotate(-0.04);
-            
-            ctx.fillStyle = '#cae8b6';
-            ctx.beginPath();
-            ctx.moveTo(-230, -25);
-            ctx.lineTo(210, -25);
-            ctx.lineTo(245, 10);
-            ctx.lineTo(210, 45);
-            ctx.lineTo(-230, 45);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = '#19612c';
-            ctx.font = '700 21px "Poppins", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('Explorar también es parte de formarse', -8, 10);
-            ctx.restore();
-
-            // 4. Texto "STEM"
-            ctx.save();
-            ctx.translate(280, 165);
-            ctx.rotate(-0.05);
-            ctx.font = '900 110px "Montserrat", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            ctx.strokeStyle = '#19612c';
-            ctx.lineWidth = 22;
-            ctx.lineJoin = 'round';
-            ctx.strokeText('STEM', 0, 0);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText('STEM', 0, 0);
-            ctx.restore();
-        }
-
-        // DIBUJO OFICIAL DE LOS TRES LOGOS ORGANIZADORES
-        function renderLogosAsDataURIs() {
-            // 1. TERCIO ESTUDIANTIL EEGGCC
-            const cTercio = document.createElement('canvas');
-            cTercio.width = 400; cTercio.height = 400;
-            const ctxT = cTercio.getContext('2d');
-            
-            ctxT.fillStyle = '#ffffff';
-            ctxT.beginPath(); ctxT.arc(200, 200, 195, 0, Math.PI*2); ctxT.fill();
-            
-            const greenColor = '#489c33';
-            ctxT.strokeStyle = greenColor; 
-            ctxT.lineWidth = 12;
-            ctxT.beginPath(); ctxT.arc(200, 200, 180, 0, Math.PI * 2); ctxT.stroke();
-            
-            ctxT.lineWidth = 4;
-            ctxT.beginPath(); ctxT.arc(200, 200, 140, 0, Math.PI * 2); ctxT.stroke();
-
-            ctxT.fillStyle = greenColor;
-            ctxT.font = '900 48px "Montserrat", sans-serif';
-            ctxT.textAlign = 'center';
-            ctxT.fillText('TERCIO', 200, 150);
-            
-            ctxT.font = '800 32px "Montserrat", sans-serif';
-            ctxT.fillText('EEGGCC', 200, 200);
-
-            ctxT.font = '900 42px "Montserrat", sans-serif';
-            ctxT.fillText('PUCP', 200, 270);
-            document.getElementById('imgTercio').src = cTercio.toDataURL();
-
-            // 2. IEEE WIE PUCP
-            const cWie = document.createElement('canvas');
-            cWie.width = 400; cWie.height = 400;
-            const ctxW = cWie.getContext('2d');
-            const wiePurple = '#702082';
-            
-            ctxW.fillStyle = wiePurple;
-            ctxW.beginPath(); ctxW.arc(200, 200, 195, 0, Math.PI*2); ctxW.fill();
-
-            ctxW.font = 'italic 700 120px "Georgia", serif';
-            ctxW.fillStyle = '#ffffff';
-            ctxW.textAlign = 'center';
-            ctxW.fillText('Wie', 200, 200);
-
-            ctxW.fillStyle = '#ffffff';
-            ctxW.font = '800 24px "Montserrat", sans-serif';
-            ctxW.fillText('IEEE WIE PUCP', 200, 300);
-            document.getElementById('imgWie').src = cWie.toDataURL();
-
-            // 3. SECRETARÍA DE GÉNERO
-            const cGen = document.createElement('canvas');
-            cGen.width = 400; cGen.height = 400;
-            const ctxG = cGen.getContext('2d');
-            
-            const gradG = ctxG.createLinearGradient(0, 0, 400, 400);
-            gradG.addColorStop(0, '#6b21a8');
-            gradG.addColorStop(1, '#3b0764');
-            ctxG.fillStyle = gradG;
-            ctxG.beginPath(); ctxG.arc(200, 200, 195, 0, Math.PI*2); ctxG.fill();
-            
-            ctxG.strokeStyle = '#d8b4fe';
-            ctxG.lineWidth = 8;
-            ctxG.beginPath(); ctxG.arc(200, 200, 180, 0, Math.PI*2); ctxG.stroke();
-
-            ctxG.fillStyle = '#ffffff';
-            ctxG.font = '800 30px "Montserrat", sans-serif';
-            ctxG.textAlign = 'center';
-            ctxG.fillText('SECRETARÍA', 200, 175);
-            
-            ctxG.fillStyle = '#f5d0fe';
-            ctxG.font = '900 38px "Montserrat", sans-serif';
-            ctxG.fillText('DE GÉNERO', 200, 245);
-            document.getElementById('imgGenero').src = cGen.toDataURL();
-        }
-    </script>
+        const celda = gridData[idx];
+        const isCompleted = !!celda;
+
+        const btn = document.createElement('button');
+        btn.onclick = () => abrirModalReto(idx);
+        btn.className = `bingo-cell aspect-square p-2 text-[10px] md:text-xs font-semibold rounded-2xl flex flex-col justify-between items-center text-center shadow border transition-all ${
+          isCompleted 
+            ? 'bg-pink-500 text-white border-pink-600 shadow-md scale-[0.98]' 
+            : 'bg-white hover:bg-pink-50 text-purple-950 border-purple-100'
+        }`;
+
+        btn.innerHTML = `
+          <span class="leading-tight ${isCompleted ? 'text-white' : 'text-gray-800'}">${reto.t}</span>
+          ${isCompleted 
+            ? `<div class="bg-white/20 w-full py-1 rounded-lg mt-1 text-[9px] font-bold truncate">✓ ${celda.nombre}</div>` 
+            : `<span class="text-[9px] text-pink-500 font-bold mt-1">Marcar +</span>`}
+        `;
+
+        grid.appendChild(btn);
+      });
+
+      actualizarAciertos();
+    }
+
+    function abrirModalReto(index) {
+      if (index === 12) return;
+      selectedCellIndex = index;
+      const reto = retosBingo[index];
+
+      document.getElementById('modalTituloReto').innerText = "Reto #" + (index + 1) + ": " + reto.t;
+      document.getElementById('modalIndicacionReto').innerText = "Sugerencia: " + reto.hint;
+      document.getElementById('labelInputDetalle').innerText = "Respuesta / Detalle relevante *";
+      document.getElementById('inputDetalleContacto').placeholder = reto.hint;
+
+      const celdaActual = gridData[index];
+      document.getElementById('inputNombreContacto').value = celdaActual ? celdaActual.nombre : '';
+      document.getElementById('inputDetalleContacto').value = celdaActual ? celdaActual.detalle : '';
+
+      document.getElementById('modalReto').classList.remove('hidden');
+    }
+
+    function cerrarModalReto() {
+      document.getElementById('modalReto').classList.add('hidden');
+    }
+
+    function confirmarCasilla() {
+      const nombre = document.getElementById('inputNombreContacto').value.trim();
+      const detalle = document.getElementById('inputDetalleContacto').value.trim();
+
+      if (!nombre || !detalle) {
+        alert("Por favor completa el nombre de la compañera y la respuesta.");
+        return;
+      }
+
+      gridData[selectedCellIndex] = { nombre, detalle };
+      cerrarModalReto();
+      renderGrid();
+      verificarBingo();
+      enviarAGoogleSheets();
+    }
+
+    function actualizarAciertos() {
+      const aciertos = gridData.filter(x => x !== null).length;
+      userData.points = aciertos;
+      document.getElementById('labelAciertos').innerText = aciertos + " / 25";
+    }
+
+    function verificarBingo() {
+      let tieneBingo = false;
+      const b = gridData.map(x => x !== null);
+
+      for (let i = 0; i < 5; i++) {
+        if (b[i*5] && b[i*5+1] && b[i*5+2] && b[i*5+3] && b[i*5+4]) tieneBingo = true;
+        if (b[i] && b[i+5] && b[i+10] && b[i+15] && b[i+20]) tieneBingo = true;
+      }
+      if (b[0] && b[6] && b[12] && b[18] && b[24]) tieneBingo = true;
+      if (b[4] && b[8] && b[12] && b[16] && b[20]) tieneBingo = true;
+
+      if (tieneBingo && !userData.bingo) {
+        userData.bingo = true;
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        alert("¡FELICIDADES! 🎉 ¡HAS HECHO BINGO EN RUTAS STEM!");
+      }
+    }
+
+    function enviarAGoogleSheets() {
+      if (!userData.name) return;
+
+      const payload = {
+        salon: userData.salon,
+        participante: userData.name,
+        codigo: userData.code,
+        especialidad: userData.major,
+        aciertos: userData.points,
+        bingo: userData.bingo ? "SÍ" : "NO",
+        fechaHora: new Date().toLocaleTimeString('es-PE')
+      };
+
+      guardarLocal(payload);
+
+      if (GOOGLE_SHEETS_WEBHOOK_URL && !GOOGLE_SHEETS_WEBHOOK_URL.includes("TU_SCRIPT_ID")) {
+        fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }).catch(err => console.log("Error envío nube:", err));
+      }
+    }
+
+    function guardarLocal(payload) {
+      let registros = JSON.parse(localStorage.getItem('bingo_registros') || '[]');
+      const idx = registros.findIndex(r => r.codigo === payload.codigo);
+      if (idx >= 0) {
+        registros[idx] = payload;
+      } else {
+        registros.push(payload);
+      }
+      localStorage.setItem('bingo_registros', JSON.stringify(registros));
+    }
+
+    function pedirClaveAdmin() {
+      const pass = prompt("Ingrese la clave de directiva:");
+      if (pass === ADMIN_PASS) {
+        cargarTablaAdmin();
+        document.getElementById('modalAdmin').classList.remove('hidden');
+      } else if (pass !== null) {
+        alert("Clave incorrecta.");
+      }
+    }
+
+    function cerrarModalAdmin() {
+      document.getElementById('modalAdmin').classList.add('hidden');
+    }
+
+    function cargarTablaAdmin() {
+      const registros = JSON.parse(localStorage.getItem('bingo_registros') || '[]');
+      const tbody = document.getElementById('tablaRegistrosAdmin');
+      tbody.innerHTML = '';
+
+      if (registros.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">No hay registros aún.</td></tr>`;
+        return;
+      }
+
+      registros.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-2.5 font-bold text-purple-900">${r.salon}</td>
+          <td class="p-2.5 font-medium">${r.participante}</td>
+          <td class="p-2.5 text-gray-500">${r.codigo}</td>
+          <td class="p-2.5 font-bold text-pink-600">${r.aciertos} / 25</td>
+          <td class="p-2.5">${r.bingo === 'SÍ' ? '🎉 SÍ' : 'NO'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function descargarExcelFormateado() {
+      const registros = JSON.parse(localStorage.getItem('bingo_registros') || '[]');
+      if (registros.length === 0) {
+        alert("Aún no hay participantes registrados.");
+        return;
+      }
+
+      let csvContent = "\uFEFFSalon;Participante;Codigo_Correo;Especialidad;Aciertos;Bingo;Hora\n";
+
+      registros.forEach(r => {
+        csvContent += `"${r.salon}";"${r.participante}";"${r.codigo}";"${r.especialidad}";"${r.aciertos}";"${r.bingo}";"${r.fechaHora}"\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Reporte_Bingo_RUTAS_STEM_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function cargarHistorialLocal() {
+      const registros = JSON.parse(localStorage.getItem('bingo_registros') || '[]');
+      if (registros.length > 0) {
+        console.log("Registros activos localmente:", registros.length);
+      }
+    }
+
+    function renderLogos() {
+      const c1 = document.getElementById('logoTercio').getContext('2d');
+      c1.fillStyle = '#6B21A8'; c1.beginPath(); c1.arc(25,25,25,0,Math.PI*2); c1.fill();
+      c1.fillStyle = '#FFFFFF'; c1.font = 'bold 10px Poppins'; c1.textAlign = 'center';
+      c1.fillText('TERCIO', 25, 22); c1.fillText('EEGGCC', 25, 33);
+
+      const c2 = document.getElementById('logoWIE').getContext('2d');
+      c2.fillStyle = '#7E22CE'; c2.beginPath(); c2.arc(25,25,25,0,Math.PI*2); c2.fill();
+      c2.fillStyle = '#FFFFFF'; c2.font = 'bold 12px Poppins'; c2.textAlign = 'center';
+      c2.fillText('IEEE', 25, 20); c2.fillStyle = '#F472B6'; c2.fillText('WIE', 25, 34);
+
+      const c3 = document.getElementById('logoGenero').getContext('2d');
+      c3.fillStyle = '#DB2777'; c3.beginPath(); c3.arc(25,25,25,0,Math.PI*2); c3.fill();
+      c3.fillStyle = '#FFFFFF'; c3.font = 'bold 9px Poppins'; c3.textAlign = 'center';
+      c3.fillText('SEC.', 25, 20); c3.fillText('GÉNERO', 25, 32);
+
+      const cR = document.getElementById('logoRutasStem').getContext('2d');
+      cR.fillStyle = '#FBCFE8'; cR.beginPath(); cR.ellipse(140, 32, 120, 28, 0, 0, Math.PI * 2); cR.fill();
+      cR.fillStyle = '#831843'; cR.font = '800 28px Poppins'; cR.textAlign = 'center';
+      cR.fillText('RUTAS STEM', 140, 38);
+
+      cR.fillStyle = '#DCFCE7'; cR.beginPath(); cR.roundRect(20, 52, 240, 24, 8); cR.fill();
+      cR.fillStyle = '#14532D'; cR.font = '600 11px Poppins';
+      cR.fillText('Explorar también es parte de formarse', 140, 68);
+    }
+  </script>
 </body>
 </html>
