@@ -15,7 +15,7 @@
 </head>
 <body class="min-h-screen pb-12 text-gray-800">
 
-  <!-- Header Branding -->
+  <!-- Encabezado con Branding Oficial -->
   <header class="bg-white shadow-md border-b-4 border-pink-500 py-4 px-6 mb-6">
     <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
@@ -25,7 +25,7 @@
       </div>
 
       <div class="flex items-center">
-        <canvas id="logoRutasStem" width="280" height="85"></canvas>
+        <canvas id="logoRutasStem" width="340" height="110"></canvas>
       </div>
 
       <div class="flex items-center gap-2">
@@ -114,7 +114,7 @@
 
   <!-- Modal Admin Directiva -->
   <div id="modalAdmin" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-3xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-bold text-xl text-purple-900">📊 Panel de Directiva (Registro General)</h3>
         <button onclick="cerrarModalAdmin()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
@@ -141,7 +141,7 @@
 
       <div class="flex justify-between items-center pt-2 border-t">
         <button onclick="descargarExcelFormateado()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 shadow transition-colors">
-          📊 Descargar Excel Ordenado (.csv)
+          📊 Descargar Excel Ordenado por Casillas (.csv)
         </button>
         <button onclick="cerrarModalAdmin()" class="bg-gray-200 text-gray-800 font-semibold py-2.5 px-4 rounded-xl text-xs">Cerrar</button>
       </div>
@@ -149,6 +149,7 @@
   </div>
 
   <script>
+    // URL Webhook de Google Sheets
     const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx_TU_SCRIPT_ID/exec";
     const ADMIN_PASS = "WIE2026";
 
@@ -304,6 +305,7 @@
       }
     }
 
+    // ENVÍO A GOOGLE SHEETS
     function enviarAGoogleSheets() {
       if (!userData.name) return;
 
@@ -314,7 +316,8 @@
         especialidad: userData.major,
         aciertos: userData.points,
         bingo: userData.bingo ? "SÍ" : "NO",
-        fechaHora: new Date().toLocaleTimeString('es-PE')
+        fechaHora: new Date().toLocaleTimeString('es-PE'),
+        casillas: gridData.map(c => c ? `${c.nombre}: ${c.detalle}` : '')
       };
 
       guardarLocal(payload);
@@ -378,6 +381,7 @@
       });
     }
 
+    // DESCARGA EXCEL LOCAL EN ORDEN CON ';' SEPARANDO EN COLUMNAS INDIVIDUALES
     function descargarExcelFormateado() {
       const registros = JSON.parse(localStorage.getItem('bingo_registros') || '[]');
       if (registros.length === 0) {
@@ -385,10 +389,22 @@
         return;
       }
 
-      let csvContent = "\uFEFFSalon;Participante;Codigo_Correo;Especialidad;Aciertos;Bingo;Hora\n";
+      let csvContent = "\uFEFFSalon;Participante;Codigo_Correo;Especialidad;Aciertos;Bingo;Hora";
+      for (let i = 1; i <= 25; i++) {
+        csvContent += `;Casilla_${i}`;
+      }
+      csvContent += "\n";
 
       registros.forEach(r => {
-        csvContent += `"${r.salon}";"${r.participante}";"${r.codigo}";"${r.especialidad}";"${r.aciertos}";"${r.bingo}";"${r.fechaHora}"\n`;
+        csvContent += `"${r.salon}";"${r.participante}";"${r.codigo}";"${r.especialidad}";"${r.aciertos}";"${r.bingo}";"${r.fechaHora}"`;
+        if (r.casillas && Array.isArray(r.casillas)) {
+          r.casillas.forEach(c => {
+            csvContent += `;"${c ? c.replace(/"/g, '""') : ''}"`;
+          });
+        } else {
+          for (let i = 0; i < 25; i++) csvContent += `;"";`;
+        }
+        csvContent += "\n";
       });
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -403,11 +419,10 @@
 
     function cargarHistorialLocal() {
       const registros = JSON.parse(localStorage.getItem('bingo_registros') || '[]');
-      if (registros.length > 0) {
-        console.log("Registros activos localmente:", registros.length);
-      }
+      if (registros.length > 0) console.log("Registros activos localmente:", registros.length);
     }
 
+    // Render de Logos
     function renderLogos() {
       const c1 = document.getElementById('logoTercio').getContext('2d');
       c1.fillStyle = '#6B21A8'; c1.beginPath(); c1.arc(25,25,25,0,Math.PI*2); c1.fill();
@@ -424,14 +439,40 @@
       c3.fillStyle = '#FFFFFF'; c3.font = 'bold 9px Poppins'; c3.textAlign = 'center';
       c3.fillText('SEC.', 25, 20); c3.fillText('GÉNERO', 25, 32);
 
+      // Logo Rutas STEM
       const cR = document.getElementById('logoRutasStem').getContext('2d');
-      cR.fillStyle = '#FBCFE8'; cR.beginPath(); cR.ellipse(140, 32, 120, 28, 0, 0, Math.PI * 2); cR.fill();
-      cR.fillStyle = '#831843'; cR.font = '800 28px Poppins'; cR.textAlign = 'center';
-      cR.fillText('RUTAS STEM', 140, 38);
+      
+      // Fondo rosa ovalado
+      cR.fillStyle = '#E8C5D8'; 
+      cR.beginPath(); 
+      cR.ellipse(170, 42, 155, 36, -0.05, 0, Math.PI * 2); 
+      cR.fill();
 
-      cR.fillStyle = '#DCFCE7'; cR.beginPath(); cR.roundRect(20, 52, 240, 24, 8); cR.fill();
-      cR.fillStyle = '#14532D'; cR.font = '600 11px Poppins';
-      cR.fillText('Explorar también es parte de formarse', 140, 68);
+      // Texto RUTAS
+      cR.fillStyle = '#9C2A6A'; 
+      cR.font = 'bold 110px Poppins'; 
+      cR.textAlign = 'left';
+      cR.fillText('RUTAS', 10, 62);
+
+      // Texto STEM
+      cR.fillStyle = '#FFFFFF'; 
+      cR.strokeStyle = '#1B5E20';
+      cR.lineWidth = 14;
+      cR.font = 'bold 110px Poppins';
+      cR.strokeText('STEM', 95, 92);
+      cR.fillText('STEM', 95, 92);
+
+      // Recuadro verde claro (Slogan)
+      cR.fillStyle = '#CAE8B6'; 
+      cR.beginPath(); 
+      cR.roundRect(35, 78, 285, 26, 4); 
+      cR.fill();
+
+      // Texto Slogan (Dentro del cuadro verde)
+      cR.fillStyle = '#1B5E20'; 
+      cR.font = '600 21px Poppins'; 
+      cR.textAlign = 'center';
+      cR.fillText('Explorar también es parte de formarse', 177, 98);
     }
   </script>
 </body>
